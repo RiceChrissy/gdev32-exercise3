@@ -89,7 +89,7 @@ void main()
     // Calculate specular
     vec3 viewDir = normalize(-shaderPosition);
     vec3 reflectDir = reflect(-lightDir, normalDir);
-    vec3 lightSpecular = pow(max(dot(reflectDir, viewDir)* intensity, 0), specularPower) * lightColor * intensity;
+    vec3 lightSpecular = pow(max(dot(reflectDir, viewDir)* intensity, 0), specularPower) * lightColor * intensity * specularIntensity;
     // Check if the fragment is within the spotlight cone
     if (intensity > 0)
     {
@@ -104,9 +104,10 @@ void main()
     }
     
     else {
-        // Discard if fragment is outside the spotlight cone. This was used to make the spotlight more noticeable
-        // discard;
-        // lightDiffuse = lightSpecular = vec3(0.0f, 0.0f, 0.0f);
+        //Zero-out the diffuse and specular components if the fragment is in shadow. This was used to make the spotlight more noticeable
+        //To make the darkness more noticeable, we can zero out the ambient component as well
+        lightDiffuse = lightAmbient = lightSpecular = vec3(0.0f, 0.0f, 0.0f);
+        fragmentColor = vec4((lightAmbient + lightDiffuse + lightSpecular), 1.0f) * texture(diffuseMap, shaderTexCoord);
     }
 }
 
