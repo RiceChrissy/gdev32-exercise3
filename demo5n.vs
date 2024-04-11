@@ -9,7 +9,7 @@ uniform mat4 viewTransform;
 uniform mat4 modelTransform;
 uniform vec3 lightPosition;
 out vec3 shaderPosition;
-out mat3 shaderTBN; //Equivalent to demo 8's shaderNormal
+out mat3 shaderTBN;
 out vec2 shaderTexCoord;
 out vec3 shaderLightPosition;
 
@@ -47,4 +47,9 @@ void main()
     // we still need OpenGL to compute the final vertex position in projection space
     // to correctly determine where the fragments of the triangle actually go on the screen
     gl_Position = projectionTransform * vec4(shaderPosition, 1.0f);
+
+    ///////////////////////////////////////////////////////////////////////////
+    // also compute this fragment position from the light's point of view
+    shaderLightSpacePosition = lightTransform * modelTransform * vec4(vertexPosition, 1.0f);
+    ///////////////////////////////////////////////////////////////////////////
 }

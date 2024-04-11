@@ -95,7 +95,8 @@ float vertices[] =
 GLuint vao;
 GLuint vbo;
 GLuint shader;
-GLuint texture[2];
+GLuint diffuseTexture;
+GLuint normalTexture;
 
 // helper struct for defining spherical polar coordinates
 struct polar
@@ -139,14 +140,6 @@ polar camera;
 glm::vec3 lightPosition = glm::vec3(0.0f, 3.0f, 0.0f);
 double previousTime = 0.0;
 
-///////////////////////////////////////////////////////////////////////////////
-// SHADOW MAPPING CODE
-
-#define SHADOW_SIZE 1024
-GLuint shadowMapFbo;     // shadow map framebuffer object
-GLuint shadowMapTexture; // shadow map texture
-GLuint shadowMapShader;  // shadow map shader
-
 // defining additional variables for spotlight
 // Source: https://learnopengl.com/Lighting/Light-casters
 glm::vec3 spotLightDirection = normalize(glm::vec3(0.0f, -2.0f, 0.0f)); // this is d_1, -2.0f is the plane
@@ -156,6 +149,14 @@ float deg = 30.0f;
 float outerDeg = 35.0f;
 float spotLightRadius = cos(glm::radians(deg));
 float spotLightOuterRadius = cos(glm::radians(outerDeg));
+
+///////////////////////////////////////////////////////////////////////////////
+// SHADOW MAPPING CODE
+
+#define SHADOW_SIZE 1024
+GLuint shadowMapFbo;     // shadow map framebuffer object
+GLuint shadowMapTexture; // shadow map texture
+GLuint shadowMapShader;  // shadow map shader
 
 bool setupShadowMap()
 {
@@ -208,8 +209,6 @@ glm::mat4 renderShadowMap()
     // (note that if you use a spot light, the FOV and the center position
     // vector should be set to the spot light's outer cone angle times 2
     // and the spot light's focus point, respectively)
-    // FOV = spotlight's outer cone angle * 2
-    // Center position vector = spotlight's focus point
     glm::mat4 lightTransform;
     lightTransform = glm::perspective(glm::radians(90.0f),      // fov
                                       1.0f,                     // aspect ratio
@@ -220,32 +219,6 @@ glm::mat4 renderShadowMap()
                                   glm::vec3(0.0f, 1.0f, 0.0f)); // up vector
     glUniformMatrix4fv(glGetUniformLocation(shadowMapShader, "lightTransform"),
                        1, GL_FALSE, glm::value_ptr(lightTransform));
-
-    /*Chris' code*/
-    // ... set up the light direction...
-    glUniform3fv(glGetUniformLocation(shader, "spotLightDirection"),
-                 1, glm::value_ptr(spotLightDirection));
-
-    // ... set up spotLightRadius
-    glUniform1f(glGetUniformLocation(shader, "spotLightRadius"),
-                spotLightRadius);
-
-    // ... set up spotLightDegrees
-    glUniform1f(glGetUniformLocation(shader, "deg"),
-                deg);
-
-    // ... set up spotLightRadius
-    glUniform1f(glGetUniformLocation(shader, "spotLightOuterRadius"),
-                spotLightOuterRadius);
-
-    // ... set up spotLightDegrees
-    glUniform1f(glGetUniformLocation(shader, "outerDeg"),
-                outerDeg);
-
-    //... set up attenuationIsOn
-    glUniform1i(glGetUniformLocation(shader, "attenuationIsOn"),
-                attenuationIsOn);
-    /*Chris' code*/
 
     // ... set up the model matrix... (just identity for this demo)
     glm::mat4 modelTransform = glm::mat4(1.0f);
@@ -296,18 +269,20 @@ bool setup()
         return false;
 
     // load our textures
-    texture[0] = gdevLoadTexture("demo5.png", GL_REPEAT, true, true);
-    texture[1] = gdevLoadTexture("demo5n.png", GL_REPEAT, true, true);
-    if (!texture[0] || !texture[1])
+    diffuseTexture = gdevLoadTexture("demo5.png", GL_REPEAT, true, true);
+    normalTexture = gdevLoadTexture("demo5n.png", GL_REPEAT, true, true);
+    if (!diffuseTexture || !normalTexture)
         return false;
 
     // enable z-buffer depth testing and face culling
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 
+    ///////////////////////////////////////////////////////////////////////////
     // setup shadow rendering
     if (!setupShadowMap())
         return false;
+    ///////////////////////////////////////////////////////////////////////////
 
     return true;
 }
@@ -463,34 +438,62 @@ void render()
     glUniform3fv(glGetUniformLocation(shader, "lightPosition"),
                  1, glm::value_ptr(lightPosition));
 
+    /*Chris' code*/
+    // ... set up the light direction...
+    glUniform3fv(glGetUniformLocation(shader, "spotLightDirection"),
+                 1, glm::value_ptr(spotLightDirection));
+
+    // ... set up spotLightRadius
+    glUniform1f(glGetUniformLocation(shader, "spotLightRadius"),
+                spotLightRadius);
+
+    // ... set up spotLightDegrees
+    glUniform1f(glGetUniformLocation(shader, "deg"),
+                deg);
+
+    // ... set up spotLightRadius
+    glUniform1f(glGetUniformLocation(shader, "spotLightOuterRadius"),
+                spotLightOuterRadius);
+
+    // ... set up spotLightDegrees
+    glUniform1f(glGetUniformLocation(shader, "outerDeg"),
+                outerDeg);
+
+    //... set up attenuationIsOn
+    glUniform1i(glGetUniformLocation(shader, "attenuationIsOn"),
+                attenuationIsOn);
+    /*Chris' code*/
+
     ///////////////////////////////////////////////////////////////////////////
     // ... set up the light transformation (for looking up the shadow map)...
     glUniformMatrix4fv(glGetUniformLocation(shader, "lightTransform"),
                        1, GL_FALSE, glm::value_ptr(lightTransform));
-    ///////////////////////////////////////////////////////////////////////////
 
-    // ... set the active textures...
+    // ... set the active texture...
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture[0]);
+    glBindTexture(GL_TEXTURE_2D, diffuseTexture);
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, texture[1]);
-    glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, shadowMapTexture);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, normalTexture);
     glUniform1i(glGetUniformLocation(shader, "diffuseMap"), 0);
-    glUniform1i(glGetUniformLocation(shader, "normalMap"), 1);
-    glUniform1i(glGetUniformLocation(shader, "shadowMap"), 2);
+    glUniform1i(glGetUniformLocation(shader, "shadowMap"), 1);
+    glUniform1i(glGetUniformLocation(shader, "normalMap"), 2);
+    ////////////////////////////////////////////////////////////////////////
+    ///
 
     // ... then draw our triangles
     glBindVertexArray(vao);
     glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices) / (11 * sizeof(float)));
 
-    glm::mat4 modelMatrix = glm::mat4(1.0f); // identity matrix
-    modelMatrix = glm::translate(modelMatrix, glm::vec3(5.0f, 1.0f, 1.0f));
-    modelMatrix = glm::rotate(modelMatrix, glm::radians((float)-45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    glUniformMatrix4fv(glGetUniformLocation(shader, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
-    glm::mat4 normalMatrix = glm::mat4(glm::transpose(glm::inverse(modelMatrix)));
-    glUniformMatrix4fv(glGetUniformLocation(shader, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
-    glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices) / (11 * sizeof(float)));
+    // Commented out just for exercise 3
+    //  glm::mat4 modelMatrix = glm::mat4(1.0f); // identity matrix
+    //  modelMatrix = glm::translate(modelMatrix, glm::vec3(5.0f, 1.0f, 1.0f));
+    //  modelMatrix = glm::rotate(modelMatrix, glm::radians((float)-45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    //  glUniformMatrix4fv(glGetUniformLocation(shader, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+    //  glm::mat4 normalMatrix = glm::mat4(glm::transpose(glm::inverse(modelMatrix)));
+    //  glUniformMatrix4fv(glGetUniformLocation(shader, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(normalMatrix));
+    //  glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices) / (11 * sizeof(float)));
 }
 
 /*****************************************************************************/

@@ -1,14 +1,14 @@
 #version 330 core
 
 in vec3 shaderPosition;
-in mat3 shaderTBN;  //Equivalent to demo 8's shaderNormal
+in mat3 shaderTBN;
 in vec2 shaderTexCoord;
 in vec3 shaderLightPosition;
 uniform sampler2D diffuseMap;
 uniform sampler2D normalMap;
 out vec4 fragmentColor;
 
-//New Variables for Spotlight
+//New Variables for Exercise
 in vec3 shaderLightDirection;
 uniform float spotLightRadius;
 uniform float deg;                  //phi
@@ -50,15 +50,13 @@ bool inShadow()
 }
 ///////////////////////////////////////////////////////////////////////////////
 
-
 void main()
 {
     // Define spotlight properties
-    vec3 lightColor = vec3(1.0f, 1.0f, 1.0f);
+    vec3 lightColor = vec3(2.0f, 2.0f, 2.0f);
     float ambientIntensity = 0.15f;
-    float specularPower = 32.0f;
-    //Below is from demo8
     float specularIntensity = 0.5f;            // specular (better implementation: look this up from a specular map!)
+    float specularPower = 32.0f;
 
     // Look up the normal from the normal map and reorient it with the TBN matrix
     vec3 textureNormal = vec3(texture(normalMap, shaderTexCoord));
@@ -82,20 +80,23 @@ void main()
     float attenuation = 1.0 / (1.0f + (0.045f * distance) + (0.0075f * distance * distance));
                             //constant  +   linear  +   quadratic
 
-
     // Calculate diffuse
     vec3 lightDiffuse = max(dot(normalDir, -lightDir), 0.0f) * lightColor;
 
     // Calculate specular
     vec3 viewDir = normalize(-shaderPosition);
     vec3 reflectDir = reflect(-lightDir, normalDir);
-    vec3 lightSpecular = pow(max(dot(reflectDir, viewDir)* intensity, 0), specularPower) * lightColor * intensity * specularIntensity;
+    vec3 lightSpecular = pow(max(dot(reflectDir, viewDir)* intensity, 0), specularPower) * lightColor * specularIntensity * intensity;
+
+    ///////////////////////////////////////////////////////////////////////////
+    // zero-out the diffuse and specular components if the fragment is in shadow
+    if (inShadow())
+        lightDiffuse = lightAmbient = lightSpecular = vec3(0.0f, 0.0f, 0.0f);
+    ///////////////////////////////////////////////////////////////////////////
+
     // Check if the fragment is within the spotlight cone
     if (intensity > 0)
     {
-        if (inShadow())
-            lightDiffuse = lightSpecular = vec3(0.0f, 0.0f, 0.0f);
-
         // Compute final fragment color
         if (attenuationIsOn == true)
             fragmentColor = vec4((lightAmbient + lightDiffuse + lightSpecular) * attenuation, 1.0f) * texture(diffuseMap, shaderTexCoord);
@@ -103,9 +104,10 @@ void main()
             fragmentColor = vec4((lightAmbient + lightDiffuse + lightSpecular), 1.0f) * texture(diffuseMap, shaderTexCoord);
     }
     
-    else {
-        //Zero-out the diffuse and specular components if the fragment is in shadow. This was used to make the spotlight more noticeable
-        //To make the darkness more noticeable, we can zero out the ambient component as well
+    else
+    {
+        // Discard if fragment is outside the spotlight cone. This was used to make the spotlight more noticeable
+        // zeroing-out diffuse, ambient, and specular is actually better, exclude ambient so it's not pitch black
         lightDiffuse = lightAmbient = lightSpecular = vec3(0.0f, 0.0f, 0.0f);
         fragmentColor = vec4((lightAmbient + lightDiffuse + lightSpecular), 1.0f) * texture(diffuseMap, shaderTexCoord);
     }
