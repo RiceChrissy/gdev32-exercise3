@@ -5,9 +5,9 @@
  * U & O - Decrease & Increase of Spotlight Height Position
  * TFGH - Spotlight Angle Movement
  * Left & Right Arrow - Decrease and Increase of Spotlight Radius
- * Down & Up Arrow - Decrease and Increase of Spoutlight Outer Radius
- * Enter - Enable Attenuation
- * Backspace - Disable Attenuation
+ * Down & Up Arrow - Decrease and Increase of Spotlight Outer Radius
+ * Backspace - Enable/Disable Attenuation
+ * Enter -  Enable/Disable Shadows
  *****************************************************************************/
 
 #include <iostream>
@@ -18,7 +18,7 @@
 
 // change this to your desired window attributes
 #define WINDOW_WIDTH 640
-#define WINDOW_HEIGHT 360
+#define WINDOW_HEIGHT 640 // Changed from 360
 #define WINDOW_TITLE "Hello Lighting (use WASDQE keys for camera, IKJLUO keys for light)"
 GLFWwindow *pWindow;
 
@@ -137,7 +137,8 @@ struct polar
 
 // variables for tracking camera and light position
 polar camera;
-glm::vec3 lightPosition = glm::vec3(0.0f, 3.0f, 0.0f);
+// glm::vec3 lightPosition = glm::vec3(0.0f, 3.0f, 0.0f);
+glm::vec3 lightPosition = glm::vec3(-5.0f, 3.0f, 5.0f);
 double previousTime = 0.0;
 
 // defining additional variables for spotlight
@@ -157,6 +158,8 @@ float spotLightOuterRadius = cos(glm::radians(outerDeg));
 GLuint shadowMapFbo;     // shadow map framebuffer object
 GLuint shadowMapTexture; // shadow map texture
 GLuint shadowMapShader;  // shadow map shader
+/*Chris' Code*/
+bool shadowsAreOn = true; // toggle shadows on/off
 
 bool setupShadowMap()
 {
@@ -209,14 +212,17 @@ glm::mat4 renderShadowMap()
     // (note that if you use a spot light, the FOV and the center position
     // vector should be set to the spot light's outer cone angle times 2
     // and the spot light's focus point, respectively)
+    // FOV = spot light's outer cone angle * 2
+    // eye position = spot light's position / spot light's origin
+    // center position = spot light's focus point
     glm::mat4 lightTransform;
-    lightTransform = glm::perspective(glm::radians(90.0f),      // fov
-                                      1.0f,                     // aspect ratio
-                                      0.1f,                     // near plane
-                                      100.0f);                  // far plane
-    lightTransform *= glm::lookAt(lightPosition,                // eye position
-                                  glm::vec3(0.0f, 0.0f, 0.0f),  // center position
-                                  glm::vec3(0.0f, 1.0f, 0.0f)); // up vector
+    lightTransform = glm::perspective(glm::radians(outerDeg * 2), // fov | originally it was glm::radians(90.0f)
+                                      1.0f,                       // aspect ratio
+                                      0.1f,                       // near plane
+                                      100.0f);                    // far plane
+    lightTransform *= glm::lookAt(lightPosition,                  // eye position
+                                  spotLightDirection,             // center position | originally it was glm::vec3(0.0f, 0.0f, 0.0f)
+                                  glm::vec3(0.0f, 1.0f, 0.0f));   // up vector
     glUniformMatrix4fv(glGetUniformLocation(shadowMapShader, "lightTransform"),
                        1, GL_FALSE, glm::value_ptr(lightTransform));
 
@@ -227,7 +233,7 @@ glm::mat4 renderShadowMap()
 
     // ... then draw our triangles
     glBindVertexArray(vao);
-    glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices) / (8 * sizeof(float)));
+    glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices) / (11 * sizeof(float)));
 
     // set the framebuffer back to the default onscreen buffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -280,8 +286,12 @@ bool setup()
 
     ///////////////////////////////////////////////////////////////////////////
     // setup shadow rendering
-    if (!setupShadowMap())
-        return false;
+    /*Chris' Code*/
+    if (shadowsAreOn == true)
+    {
+        if (!setupShadowMap())
+            return false;
+    }
     ///////////////////////////////////////////////////////////////////////////
 
     return true;
@@ -387,24 +397,13 @@ void render()
     }
     // Spotlight Radius & Outer Radius
 
-    // Toggle Attenuation
-    if (glfwGetKey(pWindow, GLFW_KEY_ENTER) == GLFW_PRESS)
+    /*Chris' Code*/
+    // ... set up the light transformation (for looking up the shadow map)...
+    glm::mat4 lightTransform;
+    if (shadowsAreOn == true)
     {
-        if (attenuationIsOn == false)
-            attenuationIsOn = true;
+        lightTransform = renderShadowMap();
     }
-    if (glfwGetKey(pWindow, GLFW_KEY_BACKSPACE) == GLFW_PRESS)
-    {
-        if (attenuationIsOn == true)
-            attenuationIsOn = false;
-    }
-    // Toggle Attenuation
-
-    ///////////////////////////////////////////////////////////////////////////
-    // draw the shadow map
-    glm::mat4 lightTransform = renderShadowMap();
-    ///////////////////////////////////////////////////////////////////////////
-
     // clear the whole frame
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -462,22 +461,33 @@ void render()
     //... set up attenuationIsOn
     glUniform1i(glGetUniformLocation(shader, "attenuationIsOn"),
                 attenuationIsOn);
+
+    //... set up shadowsAreOn
+    glUniform1i(glGetUniformLocation(shader, "shadowsAreOn"),
+                shadowsAreOn);
     /*Chris' code*/
 
-    ///////////////////////////////////////////////////////////////////////////
-    // ... set up the light transformation (for looking up the shadow map)...
-    glUniformMatrix4fv(glGetUniformLocation(shader, "lightTransform"),
-                       1, GL_FALSE, glm::value_ptr(lightTransform));
+    if (shadowsAreOn == true)
+    {
+        glUniformMatrix4fv(glGetUniformLocation(shader, "lightTransform"),
+                           1, GL_FALSE, glm::value_ptr(lightTransform));
+    }
 
     // ... set the active texture...
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, diffuseTexture);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, shadowMapTexture);
+    if (shadowsAreOn == true)
+    {
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, shadowMapTexture);
+    }
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, normalTexture);
     glUniform1i(glGetUniformLocation(shader, "diffuseMap"), 0);
-    glUniform1i(glGetUniformLocation(shader, "shadowMap"), 1);
+    if (shadowsAreOn == true)
+    {
+        glUniform1i(glGetUniformLocation(shader, "shadowMap"), 1);
+    }
     glUniform1i(glGetUniformLocation(shader, "normalMap"), 2);
     ////////////////////////////////////////////////////////////////////////
     ///
@@ -485,6 +495,8 @@ void render()
     // ... then draw our triangles
     glBindVertexArray(vao);
     glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices) / (11 * sizeof(float)));
+
+    /*Chris' Code*/
 
     // Commented out just for exercise 3
     //  glm::mat4 modelMatrix = glm::mat4(1.0f); // identity matrix
@@ -504,6 +516,14 @@ void handleKeys(GLFWwindow *pWindow, int key, int scancode, int action, int mode
     // pressing Esc closes the window
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(pWindow, GL_TRUE);
+
+    /*Chris' Code*/
+    // Toggle Attenuation
+    if (glfwGetKey(pWindow, GLFW_KEY_BACKSPACE) == GLFW_PRESS && glfwGetKey(pWindow, GLFW_KEY_BACKSPACE) != GLFW_RELEASE)
+        attenuationIsOn = !attenuationIsOn;
+    // Toggle Shadows
+    if (glfwGetKey(pWindow, GLFW_KEY_ENTER) == GLFW_PRESS && glfwGetKey(pWindow, GLFW_KEY_ENTER) != GLFW_RELEASE)
+        shadowsAreOn = !shadowsAreOn;
 }
 
 // handler called by GLFW when the window is resized

@@ -16,6 +16,15 @@ out vec3 shaderLightPosition;
 uniform vec3 spotLightDirection;
 out vec3 shaderLightDirection;
 
+///////////////////////////////////////////////////////////////////////////////
+// added for shadow mapping
+uniform mat4 lightTransform;
+out vec4 shaderLightSpacePosition;
+
+//New Variables for Exercise 3
+uniform bool shadowsAreOn;
+///////////////////////////////////////////////////////////////////////////////
+
 void main()
 {
     // combine the model and view transforms to get the camera space transform
@@ -41,4 +50,10 @@ void main()
     // we still need OpenGL to compute the final vertex position in projection space
     // to correctly determine where the fragments of the triangle actually go on the screen
     gl_Position = projectionTransform * vec4(shaderPosition, 1.0f);
+
+    ///////////////////////////////////////////////////////////////////////////
+    // also compute this fragment position from the light's point of view
+    if(shadowsAreOn == true)
+        shaderLightSpacePosition = lightTransform * modelTransform * vec4(vertexPosition, 1.0f);
+    ///////////////////////////////////////////////////////////////////////////
 }

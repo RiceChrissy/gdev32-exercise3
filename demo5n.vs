@@ -20,6 +20,9 @@ out vec3 shaderLightDirection;
 // added for shadow mapping
 uniform mat4 lightTransform;
 out vec4 shaderLightSpacePosition;
+
+//New Variables for Exercise 3
+uniform bool shadowsAreOn;
 ///////////////////////////////////////////////////////////////////////////////
 
 void main()
@@ -50,6 +53,7 @@ void main()
 
     ///////////////////////////////////////////////////////////////////////////
     // also compute this fragment position from the light's point of view
-    shaderLightSpacePosition = lightTransform * modelTransform * vec4(vertexPosition, 1.0f);
+    if(shadowsAreOn == true)
+        shaderLightSpacePosition = lightTransform * modelTransform * vec4(vertexPosition, 1.0f);
     ///////////////////////////////////////////////////////////////////////////
 }
