@@ -6,7 +6,7 @@ in vec2 shaderTexCoord;
 in vec3 shaderLightPosition;
 uniform sampler2D diffuseMap;
 uniform sampler2D normalMap;
-uniform sampler2D planeMap;
+// uniform sampler2D planeMap;
 out vec4 fragmentColor;
 
 //Spotlight Variables
@@ -56,7 +56,7 @@ void main()
 {
     // define some constant properties for the light
     // (you should really be passing these parameters into the shader as uniform vars instead)
-    vec3 lightColor = vec3(1.0f, 1.0f, 1.0f);  // diffuse
+    vec3 lightColor = vec3(3.0f, 3.0f, 3.0f);  // diffuse
     float ambientIntensity = 0.15f;            // ambient
     float specularIntensity = 0.5f;            // specular (better implementation: look this up from a specular map!)
     float specularPower = 32.0f;               // specular exponent

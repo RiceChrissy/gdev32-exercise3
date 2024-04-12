@@ -150550,62 +150550,78 @@ float chikipiVertices[] =
         0.668571f,
 
 };
-float planeVertices[] = {
-    -8.00f,
-    -2.00f,
-    8.00f,
-    0.0f,
-    1.0f,
-    0.0f,
-    0.0f,
-    0.0f,
-    8.00f,
-    -2.00f,
-    8.00f,
-    0.0f,
-    1.0f,
-    0.0f,
-    4.0f,
-    0.0f,
-    8.00f,
-    -2.00f,
-    -8.00f,
-    0.0f,
-    1.0f,
-    0.0f,
-    4.0f,
-    4.0f,
-    -8.00f,
-    -2.00f,
-    8.00f,
-    0.0f,
-    1.0f,
-    0.0f,
-    0.0f,
-    0.0f,
-    8.00f,
-    -2.00f,
-    -8.00f,
-    0.0f,
-    1.0f,
-    0.0f,
-    4.0f,
-    4.0f,
-    -8.00f,
-    -2.00f,
-    -8.00f,
-    0.0f,
-    1.0f,
-    0.0f,
-    0.0f,
-    4.0f,
+float planeVertices[] =
+    {
+        -8.00f, -2.00f, 8.00f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+        8.00f, -2.00f, 8.00f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 4.0f, 0.0f,
+        8.00f, -2.00f, -8.00f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 4.0f, 4.0f,
+        -8.00f, -2.00f, 8.00f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+        8.00f, -2.00f, -8.00f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 4.0f, 4.0f,
+        -8.00f, -2.00f, -8.00f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 4.0f,
+
+        // ground bottom plane
+        8.00f, -2.00f, -8.00f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 4.0f, 4.0f,
+        8.00f, -2.00f, 8.00f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 4.0f, 0.0f,
+        -8.00f, -2.00f, 8.00f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+        -8.00f, -2.00f, -8.00f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 4.0f,
+        8.00f, -2.00f, -8.00f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 4.0f, 4.0f,
+        -8.00f, -2.00f, 8.00f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+        // -8.00f,
+        // -2.00f,
+        // 8.00f,
+        // 0.0f,
+        // 1.0f,
+        // 0.0f,
+        // 0.0f,
+        // 0.0f,
+        // 8.00f,
+        // -2.00f,
+        // 8.00f,
+        // 0.0f,
+        // 1.0f,
+        // 0.0f,
+        // 4.0f,
+        // 0.0f,
+        // 8.00f,
+        // -2.00f,
+        // -8.00f,
+        // 0.0f,
+        // 1.0f,
+        // 0.0f,
+        // 4.0f,
+        // 4.0f,
+        // -8.00f,
+        // -2.00f,
+        // 8.00f,
+        // 0.0f,
+        // 1.0f,
+        // 0.0f,
+        // 0.0f,
+        // 0.0f,
+        // 8.00f,
+        // -2.00f,
+        // -8.00f,
+        // 0.0f,
+        // 1.0f,
+        // 0.0f,
+        // 4.0f,
+        // 4.0f,
+        // -8.00f,
+        // -2.00f,
+        // -8.00f,
+        // 0.0f,
+        // 1.0f,
+        // 0.0f,
+        // 0.0f,
+        // 4.0f,
+        // ground top plane
 };
 
 // OpenGL object IDs
 GLuint chikipiVAO, planeVAO;
 GLuint chikipiVBO, planeVBO;
 GLuint shader;
-GLuint stoneBrickDiffuse, stoneBrickNormal, grassTexture;
+GLuint stoneBrickDiffuse, stoneBrickNormal, planeTexture, planeNormal;
 
 // helper struct for defining spherical polar coordinates
 struct polar
@@ -150783,12 +150799,14 @@ bool setup()
     glBindVertexArray(planeVAO);
     glBindBuffer(GL_ARRAY_BUFFER, planeVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(planeVertices), planeVertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(9 * sizeof(float)));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void *)0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void *)(3 * sizeof(float)));
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void *)(6 * sizeof(float)));
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void *)(9 * sizeof(float)));
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(3);
     // load our shader program
     shader = gdevLoadShader("exercise3.vs", "exercise3.fs");
     if (!shader)
@@ -150803,8 +150821,12 @@ bool setup()
     if (!stoneBrickNormal)
         return false;
 
-    grassTexture = gdevLoadTexture("grass-texture-background.jpg", GL_REPEAT, true, true);
-    if (!grassTexture)
+    planeTexture = gdevLoadTexture("demo5.png", GL_REPEAT, true, true);
+    if (!planeTexture)
+        return false;
+
+    planeNormal = gdevLoadTexture("demo5n.png", GL_REPEAT, true, true);
+    if (!planeNormal)
         return false;
 
     // enable z-buffer depth testing and face culling
@@ -150988,7 +151010,17 @@ void render()
     //... set up attenuationIsOn
     glUniform1i(glGetUniformLocation(shader, "attenuationIsOn"),
                 attenuationIsOn);
+
+    //... set up shadowsAreOn
+    glUniform1i(glGetUniformLocation(shader, "shadowsAreOn"),
+                shadowsAreOn);
     /*Chris' code*/
+
+    if (shadowsAreOn == true)
+    {
+        glUniformMatrix4fv(glGetUniformLocation(shader, "lightTransform"),
+                           1, GL_FALSE, glm::value_ptr(lightTransform));
+    }
 
     // ... set the active textures...
     glActiveTexture(GL_TEXTURE0);
@@ -151013,14 +151045,16 @@ void render()
     glBindVertexArray(chikipiVAO);
     glDrawArrays(GL_TRIANGLES, 0, sizeof(chikipiVertices) / (11 * sizeof(float)));
 
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, grassTexture);
-    glUniform1i(glGetUniformLocation(shader, "planeMap"), 3);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, planeTexture);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, planeNormal);
+    // glUniform1i(glGetUniformLocation(shader, "planeMap"), 3);
     glBindVertexArray(planeVAO);
     // glm::mat4 modelMatrix = glm::mat4(1.0f);
     // modelMatrix = glm::mat4(1.0f);
     // modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 2.0f, 0.0f));
-    glDrawArrays(GL_TRIANGLES, 0, sizeof(planeVertices) / (8 * sizeof(float)));
+    glDrawArrays(GL_TRIANGLES, 0, sizeof(planeVertices) / (11 * sizeof(float)));
 }
 
 /*****************************************************************************/
