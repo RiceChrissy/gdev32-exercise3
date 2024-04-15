@@ -53,7 +53,7 @@ void main()
 
     ///////////////////////////////////////////////////////////////////////////
     // also compute this fragment position from the light's point of view
-    if(shadowsAreOn == true)
+    // if(shadowsAreOn == true)
         shaderLightSpacePosition = lightTransform * modelTransform * vec4(vertexPosition, 1.0f);
     ///////////////////////////////////////////////////////////////////////////
 }

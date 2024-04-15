@@ -8,6 +8,7 @@
  * Down & Up Arrow - Decrease and Increase of Spotlight Outer Radius
  * Backspace - Enable/Disable Attenuation
  * Enter -  Enable/Disable Shadows
+ * , & . - Decrease and Increase PCF samples
  *****************************************************************************/
 
 #include <iostream>
@@ -15,56 +16,16 @@
 #include <GLFW/glfw3.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <gdev.h>
+#include <cstdlib>
+#include <time.h>
 
 // change this to your desired window attributes
-#define WINDOW_WIDTH 640
-#define WINDOW_HEIGHT 640 // Changed from 360
+#define WINDOW_WIDTH 1024  // Changed from 640
+#define WINDOW_HEIGHT 1024 // Changed from 360
 #define WINDOW_TITLE "Exercise 3"
 GLFWwindow *pWindow;
 
 // model
-/*
-float chikipiVertices[] =
-    {
-       //  x,    y,    z,  color:x, y,    z, xnorm, ynorm, znorm,     s,     t
-        -1.0f, 1.0f, -1.0f,   1.0f, 1.0f, 1.0f,  -0.0f, 1.0f, -0.0f,  0.875f, 0.5f,
-         1.0f, 1.0f, 1.0f,    1.0f, 1.0f, 1.0f,  -0.0f, 1.0f, -0.0f,  0.625f, 0.75f,
-         1.0f, 1.0f, -1.0f,   1.0f, 1.0f, 1.0f,  -0.0f, 1.0f, -0.0f,  0.625f, 0.5f,
-         1.0f, 1.0f, 1.0f,    1.0f, 1.0f, 1.0f,  -0.0f, -0.0f, 1.0f,  0.625f, 0.75f,
-        -1.0f, -1.0f, 1.0f,   1.0f, 1.0f, 1.0f,  -0.0f, -0.0f, 1.0f,  0.375f, 1.0f,
-         1.0f, -1.0f, 1.0f,   1.0f, 1.0f, 1.0f,  -0.0f, -0.0f, 1.0f,  0.375f, 0.75f,
-        -1.0f, 1.0f, 1.0f,    1.0f, 1.0f, 1.0f,  -1.0f, -0.0f, -0.0f, 0.625f, 0.0f,
-        -1.0f, -1.0f, -1.0f,  1.0f, 1.0f, 1.0f,  -1.0f, -0.0f, -0.0f, 0.375f, 0.25f,
-        -1.0f, -1.0f, 1.0f,   1.0f, 1.0f, 1.0f,  -1.0f, -0.0f, -0.0f, 0.375f, 0.0f,
-         1.0f, -1.0f, -1.0f,  1.0f, 1.0f, 1.0f,  -0.0f, -1.0f, -0.0f, 0.375f, 0.5f,
-        -1.0f, -1.0f, 1.0f,   1.0f, 1.0f, 1.0f,  -0.0f, -1.0f, -0.0f, 0.125f, 0.75f,
-        -1.0f, -1.0f, -1.0f,  1.0f, 1.0f, 1.0f,  -0.0f, -1.0f, -0.0f, 0.125f, 0.5f,
-         1.0f, 1.0f, -1.0f,   1.0f, 1.0f, 1.0f,   1.0f, -0.0f, -0.0f, 0.625f, 0.5f,
-         1.0f, -1.0f, 1.0f,   1.0f, 1.0f, 1.0f,   1.0f, -0.0f, -0.0f, 0.375f, 0.75f,
-         1.0f, -1.0f, -1.0f,  1.0f, 1.0f, 1.0f,   1.0f, -0.0f, -0.0f, 0.375f, 0.5f,
-        -1.0f, 1.0f, -1.0f,   1.0f, 1.0f, 1.0f,  -0.0f, -0.0f, -1.0f, 0.625f, 0.25f,
-         1.0f, -1.0f, -1.0f,  1.0f, 1.0f, 1.0f,  -0.0f, -0.0f, -1.0f, 0.375f, 0.5f,
-        -1.0f, -1.0f, -1.0f,  1.0f, 1.0f, 1.0f,  -0.0f, -0.0f, -1.0f, 0.375f, 0.25f,
-        -1.0f, 1.0f, -1.0f,   1.0f, 1.0f, 1.0f,  -0.0f, 1.0f, -0.0f,  0.875f, 0.5f,
-        -1.0f, 1.0f, 1.0f,    1.0f, 1.0f, 1.0f,  -0.0f, 1.0f, -0.0f,  0.875f, 0.75f,
-         1.0f, 1.0f, 1.0f,    1.0f, 1.0f, 1.0f,  -0.0f, 1.0f, -0.0f,  0.625f, 0.75f,
-         1.0f, 1.0f, 1.0f,    1.0f, 1.0f, 1.0f,  -0.0f, -0.0f, 1.0f,  0.625f, 0.75f,
-        -1.0f, 1.0f, 1.0f,    1.0f, 1.0f, 1.0f,  -0.0f, -0.0f, 1.0f,  0.625f, 1.0f,
-        -1.0f, -1.0f, 1.0f,   1.0f, 1.0f, 1.0f,  -0.0f, -0.0f, 1.0f,  0.375f, 1.0f,
-        -1.0f, 1.0f, 1.0f,    1.0f, 1.0f, 1.0f,  -1.0f, -0.0f, -0.0f, 0.625f, 0.0f,
-        -1.0f, 1.0f, -1.0f,   1.0f, 1.0f, 1.0f,  -1.0f, -0.0f, -0.0f, 0.625f, 0.25f,
-        -1.0f, -1.0f, -1.0f,  1.0f, 1.0f, 1.0f,  -1.0f, -0.0f, -0.0f, 0.375f, 0.25f,
-         1.0f, -1.0f, -1.0f,  1.0f, 1.0f, 1.0f,  -0.0f, -1.0f, -0.0f, 0.375f, 0.5f,
-         1.0f, -1.0f, 1.0f,   1.0f, 1.0f, 1.0f,  -0.0f, -1.0f, -0.0f, 0.375f, 0.75f,
-        -1.0f, -1.0f, 1.0f,   1.0f, 1.0f, 1.0f,  -0.0f, -1.0f, -0.0f, 0.125f, 0.75f,
-         1.0f, 1.0f, -1.0f,   1.0f, 1.0f, 1.0f,   1.0f, -0.0f, -0.0f, 0.625f, 0.5f,
-         1.0f, 1.0f, 1.0f,    1.0f, 1.0f, 1.0f,   1.0f, -0.0f, -0.0f, 0.625f, 0.75f,
-         1.0f, -1.0f, 1.0f,   1.0f, 1.0f, 1.0f,   1.0f, -0.0f, -0.0f, 0.375f, 0.75f,
-        -1.0f, 1.0f, -1.0f,   1.0f, 1.0f, 1.0f,  -0.0f, -0.0f, -1.0f, 0.625f, 0.25f,
-         1.0f, 1.0f, -1.0f,   1.0f, 1.0f, 1.0f,  -0.0f, -0.0f, -1.0f, 0.625f, 0.5f,
-         1.0f, -1.0f, -1.0f,  1.0f, 1.0f, 1.0f,  -0.0f, -0.0f, -1.0f, 0.375f, 0.5f,
-    };
-*/
 
 float chikipiVertices[] =
     {
@@ -150684,6 +150645,30 @@ GLuint shadowMapTexture; // shadow map texture
 GLuint shadowMapShader;  // shadow map shader
 /*Chris' Code*/
 bool shadowsAreOn = true; // toggle shadows on/off
+int pcfSamples = 1;       // number of samples for PCF, grid size is (pcfSamples*2)+1 x (pcfSamples*2)+1
+
+int pcfRandomX[9] = {
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+};
+int pcfRandomY[9] = {
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+};
 
 bool setupShadowMap()
 {
@@ -151014,6 +150999,16 @@ void render()
     //... set up shadowsAreOn
     glUniform1i(glGetUniformLocation(shader, "shadowsAreOn"),
                 shadowsAreOn);
+
+    //... set up pcfSamples
+    glUniform1i(glGetUniformLocation(shader, "pcfSamples"),
+                pcfSamples);
+
+    //... set up pcfRandomizer
+    glUniform1iv(glGetUniformLocation(shader, "pcfRandomX"),
+                 1, pcfRandomX);
+    glUniform1iv(glGetUniformLocation(shader, "pcfRandomY"),
+                 1, pcfRandomY);
     /*Chris' code*/
 
     if (shadowsAreOn == true)
@@ -151049,11 +151044,7 @@ void render()
     glBindTexture(GL_TEXTURE_2D, planeTexture);
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, planeNormal);
-    // glUniform1i(glGetUniformLocation(shader, "planeMap"), 3);
     glBindVertexArray(planeVAO);
-    // glm::mat4 modelMatrix = glm::mat4(1.0f);
-    // modelMatrix = glm::mat4(1.0f);
-    // modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 2.0f, 0.0f));
     glDrawArrays(GL_TRIANGLES, 0, sizeof(planeVertices) / (11 * sizeof(float)));
 }
 
@@ -151073,6 +151064,25 @@ void handleKeys(GLFWwindow *pWindow, int key, int scancode, int action, int mode
     // Toggle Shadows
     if (glfwGetKey(pWindow, GLFW_KEY_ENTER) == GLFW_PRESS && glfwGetKey(pWindow, GLFW_KEY_ENTER) != GLFW_RELEASE)
         shadowsAreOn = !shadowsAreOn;
+    // Increase/Decrease PCF Samples
+    if (glfwGetKey(pWindow, GLFW_KEY_COMMA) == GLFW_PRESS && glfwGetKey(pWindow, GLFW_KEY_COMMA) != GLFW_RELEASE && pcfSamples > 1)
+    {
+        pcfSamples -= 1;
+        for (int i = 0; i < 9; i++)
+        {
+            pcfRandomX[i] = rand() % ((pcfSamples * 2) + 1) - pcfSamples;
+            pcfRandomY[i] = rand() % ((pcfSamples * 2) + 1) - pcfSamples;
+        }
+    }
+    if (glfwGetKey(pWindow, GLFW_KEY_PERIOD) == GLFW_PRESS && glfwGetKey(pWindow, GLFW_KEY_PERIOD) != GLFW_RELEASE && pcfSamples < 4)
+    {
+        pcfSamples += 1;
+        for (int i = 0; i < 9; i++)
+        {
+            pcfRandomX[i] = rand() % ((pcfSamples * 2) + 1) - pcfSamples;
+            pcfRandomY[i] = rand() % ((pcfSamples * 2) + 1) - pcfSamples;
+        }
+    }
 }
 
 // handler called by GLFW when the window is resized
@@ -151085,6 +151095,8 @@ void handleResize(GLFWwindow *pWindow, int width, int height)
 // main function
 int main(int argc, char **argv)
 {
+    // Source: https://mathbits.com/MathBits/CompSci/LibraryFunc/rand.htm
+    srand(time(NULL));
     // initialize GLFW and ask for OpenGL 3.3 core
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);

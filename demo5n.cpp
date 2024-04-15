@@ -8,6 +8,7 @@
  * Down & Up Arrow - Decrease and Increase of Spotlight Outer Radius
  * Backspace - Enable/Disable Attenuation
  * Enter -  Enable/Disable Shadows
+ * , & . - Decrease and Increase PCF samples
  *****************************************************************************/
 
 #include <iostream>
@@ -15,10 +16,12 @@
 #include <GLFW/glfw3.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <gdev.h>
+#include <cstdlib>
+#include <time.h>
 
 // change this to your desired window attributes
-#define WINDOW_WIDTH 640
-#define WINDOW_HEIGHT 640 // Changed from 360
+#define WINDOW_WIDTH 1024  // Changed from 640
+#define WINDOW_HEIGHT 1024 // Changed from 360
 #define WINDOW_TITLE "Hello Lighting (use WASDQE keys for camera, IKJLUO keys for light)"
 GLFWwindow *pWindow;
 
@@ -160,7 +163,30 @@ GLuint shadowMapTexture; // shadow map texture
 GLuint shadowMapShader;  // shadow map shader
 /*Chris' Code*/
 bool shadowsAreOn = true; // toggle shadows on/off
+int pcfSamples = 1;       // number of samples for PCF, grid size is (pcfSamples*2)+1 x (pcfSamples*2)+1
 
+int pcfRandomX[9] = {
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+};
+int pcfRandomY[9] = {
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+    rand() % (pcfSamples * 2) + 1 - pcfSamples,
+};
 bool setupShadowMap()
 {
     // create the FBO for rendering shadows
@@ -465,6 +491,16 @@ void render()
     //... set up shadowsAreOn
     glUniform1i(glGetUniformLocation(shader, "shadowsAreOn"),
                 shadowsAreOn);
+
+    //... set up pcfSamples
+    glUniform1i(glGetUniformLocation(shader, "pcfSamples"),
+                pcfSamples);
+
+    //... set up pcfRandomizer
+    glUniform1iv(glGetUniformLocation(shader, "pcfRandomX"),
+                 1, pcfRandomX);
+    glUniform1iv(glGetUniformLocation(shader, "pcfRandomY"),
+                 1, pcfRandomY);
     /*Chris' code*/
 
     if (shadowsAreOn == true)
@@ -524,6 +560,25 @@ void handleKeys(GLFWwindow *pWindow, int key, int scancode, int action, int mode
     // Toggle Shadows
     if (glfwGetKey(pWindow, GLFW_KEY_ENTER) == GLFW_PRESS && glfwGetKey(pWindow, GLFW_KEY_ENTER) != GLFW_RELEASE)
         shadowsAreOn = !shadowsAreOn;
+    // Increase/Decrease PCF Samples
+    if (glfwGetKey(pWindow, GLFW_KEY_COMMA) == GLFW_PRESS && glfwGetKey(pWindow, GLFW_KEY_COMMA) != GLFW_RELEASE && pcfSamples > 1)
+    {
+        pcfSamples -= 1;
+        for (int i = 0; i < 9; i++)
+        {
+            pcfRandomX[i] = rand() % ((pcfSamples * 2) + 1) - pcfSamples;
+            pcfRandomY[i] = rand() % ((pcfSamples * 2) + 1) - pcfSamples;
+        }
+    }
+    if (glfwGetKey(pWindow, GLFW_KEY_PERIOD) == GLFW_PRESS && glfwGetKey(pWindow, GLFW_KEY_PERIOD) != GLFW_RELEASE && pcfSamples < 4)
+    {
+        pcfSamples += 1;
+        for (int i = 0; i < 9; i++)
+        {
+            pcfRandomX[i] = rand() % ((pcfSamples * 2) + 1) - pcfSamples;
+            pcfRandomY[i] = rand() % ((pcfSamples * 2) + 1) - pcfSamples;
+        }
+    }
 }
 
 // handler called by GLFW when the window is resized
@@ -536,6 +591,8 @@ void handleResize(GLFWwindow *pWindow, int width, int height)
 // main function
 int main(int argc, char **argv)
 {
+    // Source: https://mathbits.com/MathBits/CompSci/LibraryFunc/rand.htm
+    srand(time(NULL));
     // initialize GLFW and ask for OpenGL 3.3 core
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
